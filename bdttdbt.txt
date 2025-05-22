@@ -1,0 +1,993 @@
+FROM SYLLABUS:-
+1) Write the scala code to implement bubble sort algorithm.
+object BubbleSort {
+  def bubbleSort(arr: Array[Int]): Array[Int] = {
+    val n = arr.length
+    for (i <- 0 until n - 1) {
+      for (j <- 0 until n - i - 1) {
+        if (arr(j) > arr(j + 1)) {
+          val temp = arr(j)
+          arr(j) = arr(j + 1)
+          arr(j + 1) = temp
+        }
+      }
+    }
+    arr
+  }
+
+  def main(args: Array[String]): Unit = {
+    val array = Array(64, 34, 25, 12, 22, 11, 90)
+    println("Original array: " + array.mkString(", "))
+    val sortedArray = bubbleSort(array)
+    println("Sorted array: " + sortedArray.mkString(", "))
+  }
+}
+2) Write scala code to find the length of each word from the array. Write a function to find the          length of each word and return the word with highest length .
+Ex for the collection of words = (“games”, “television”,”rope”,”table”) The function should return (“television”,10). The word with the highest length . Read the words from the keyboard. 
+object WordLengthFinder {
+  
+  
+  def findLongestWord(words: Array[String]): String = {
+    
+    for (word <- words) {
+      println(s"Word: '$word', Length: ${word.length}")
+    }
+
+    
+    val longestWord = words.maxBy(_.length)
+    longestWord
+  }
+
+  def main(args: Array[String]): Unit = {
+    val wordArray = Array("apple", "banana", "grapefruit", "kiwi", "pineapple","tejusShetty")
+    val longest = findLongestWord(wordArray)
+    println(s"\nThe longest word is: '$longest' with length: ${longest.length}")
+  }
+}
+
+3) Write scala code to find the number of books published by each author, referring to the collection given below, with (authorName, BookName) 
+{ (‘ Dr. Seuss’: ‘How the Grinch Stole Christmas!’) ,(‘ Jon Stone’: ‘Monsters at the End of This Book’ ) , (‘ Dr. Seuss’: ‘The Lorax’ ) ,( ‘Jon Stone’: ‘Big Bird in China’ ) ( ‘ Dr. Seuss’ :’ One Fish, Two Fish, Red Fish, Blue Fish’ ) } 
+object BookCounter {
+
+  def countBooksByAuthor(books: List[(String, String)]): Map[String, Int] = {
+    
+    val groupedByAuthor = books.groupBy(_._1)
+
+    
+    val bookCounts = groupedByAuthor.map { case (author, bookList) => 
+      (author, bookList.size)
+    }
+
+    bookCounts
+  }
+
+  def main(args: Array[String]): Unit = {
+    
+    val bookList = List(
+      ("Dr. Seuss", "How the Grinch Stole Christmas!"),
+      ("Jon Stone", "Monsters at the End of This Book"),
+      ("Dr. Seuss", "The Lorax"),
+      ("Jon Stone", "Big Bird in China"),
+      ("Dr. Seuss", "One Fish, Two Fish, Red Fish, Blue Fish")
+    )
+
+    val authorBookCounts = countBooksByAuthor(bookList)
+
+   
+    println("Number of books published by each author:")
+    for ((author, count) <- authorBookCounts) {
+      println(s"$author: $count")
+    }
+  }
+}
+4) Analyze the application of fold() and aggregate() functions in Spark by considering a scenario where all the items in a collection are updated by a count of 100. Evaluate the efficiency, performance, and suitability of both. 
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+
+object FoldVsAggregate {
+  def main(args: Array[String]): Unit = {
+    val sc = new SparkContext(new SparkConf().setAppName("Fold vs Aggregate").setMaster("local[*]"))
+
+    val rdd = sc.parallelize(List(1, 2, 3, 4, 5), 3)
+    println("original list:")
+    rdd.collect().foreach(println)
+
+    val foldResult = rdd.map(_ + 100).fold(0)(_ + _)
+    println(s"Fold result : $foldResult")
+
+    val aggregateResult = rdd.aggregate(0)(_ + _ + 100, _ + _)
+    println(s"Aggregate result: $aggregateResult")
+
+    sc.stop()
+  }
+}
+*build.sbt:-
+name := "FoldVsAggregate"
+version := "0.1"
+scalaVersion := "2.12.18"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "3.5.0"
+5) Consider a text file text.txt. Read the file and count the number of occurrences of each word. Store the result in a file. Display the words which appear more than 4 times.
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+
+object WordCount {
+  def main(args: Array[String]): Unit = {
+    val path = "log.txt" // Input file path
+    val conf = new SparkConf().setAppName("WordCount").setMaster("local[*]")
+    val sc = new SparkContext(conf)
+
+    
+    val rdd = sc.textFile(path).flatMap(_.split(" "))
+
+    
+    val rdd1 = rdd.map(word => (word, 1))
+
+    
+    val rdd2 = rdd1.reduceByKey((v1, v2) => v1 + v2)
+
+    
+    val rdd3 = rdd2.filter(x => x._2 > 4)
+
+    
+    rdd3.saveAsTextFile("WordCountsbt")
+
+    
+    sc.stop()
+  }
+}
+Build.sbt:-
+name := "WordCount"
+version := "0.1"
+scalaVersion := "2.12.18"
+libraryDependencies ++= Seq("org.apache.spark" %% "spark-core" % "3.5.0")
+
+6) Consider the List Country = ("Germany India USA","USA India Russia", "India Brazil Canada China") Create a pair RDD by splitting by space on every element in an RDD, flatten it to form a single word string on each element in RDD and assign an integer “1” to every word. Display the elements in ascending order. Write a code to combine the values with same Key. 
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+
+object country {
+  def main(args: Array[String]): Unit = {
+    val conf = new SparkConf().setAppName("Country").setMaster("local[*]")
+    val sc = new SparkContext(conf)
+
+    val country = List("Germany India USA", "USA India Russia", "India Brazil Canada China")
+    val rdd = sc.parallelize(country)
+
+    val rdd1 = rdd.flatMap(_.split(" "))
+    val rdd2 = rdd1.map(word => (word, 1))
+    val rdd3 = rdd2.sortByKey()
+
+    rdd3.collect().foreach(println)
+
+    sc.stop()
+  }
+}
+Build.sbt:-
+name := "country"
+version := "0.1"
+scalaVersion := "2.12.18"
+libraryDependencies ++= Seq("org.apache.spark" %% "spark-core" % "3.5.0")
+
+7) Tweet Mining: A dataset with the 8198 reduced tweets, reduced-tweets.json will be provided. The data contains reduced tweets as in the sample below:
+ {"id":"572692378957430785", "user":"Srkian_nishu :)", "text":"@always_nidhi @YouTube no idnt understand bti loved of this mve is rocking", "place":"Orissa", "country":"India"} A function to parse the tweets into an RDD will be provided. The task is to print the top 10 tweeters. 
+import org.apache.spark.sql.SparkSession
+
+object userMining {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder
+      .appName("TopTweeters")
+      .master("local[*]")
+      .getOrCreate()
+
+    val tweets = spark.read.json("rt.json")
+
+    tweets.rdd
+      .map(row => (row.getAs[String]("user"), 1))
+      .reduceByKey(_ + _)
+      .top(10)(Ordering.by(_._2))
+      .foreach(println)
+
+    spark.stop()
+  }
+}
+**Build.sbt:
+name := "userMining"
+version := "1.0"
+scalaVersion := "2.11.12"
+
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.3.0"
+libraryDependencies += "org.apache.spark" %% "spark-sql"  % "2.3.0"
+8) There will be a process which will be streaming lines of text to a unix port using socket communication. The process we can use for this purpose is netcat. It will stream lines typed on the console to a unix socket. The spark application needs to read the lines from the specified port, and it needs to produce the word counts on the console. A batch interval of 5 second can be used.
+Paste one by one :-
+sudo su
+spark-shell
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.StreamingContext._
+
+val ssc = new StreamingContext(sc, Seconds(5))
+val streams = ssc.socketTextStream("localhost", 9999, org.apache.spark.storage.StorageLevel.MEMORY_ONLY)
+val wordcount = streams.flatMap(_.split(" ")).map(w => (w, 1)).reduceByKey(_ + _)
+wordcount.print()
+ssc.start()
+new terminal:-
+sudo su
+nc -lk 9999
+
+
+
+FROM 1ST SPARK CLASS SESSION:-
+
+
+4. Write the Spark code to print the top 10 tweeters.
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+
+object TopTweetersApp {
+  def main(args: Array[String]): Unit = {
+    if (args.length != 1) {
+      System.err.println("Usage: TopTweetersApp <tweets_file>")
+      System.exit(1)
+    }
+
+    val spark = SparkSession.builder
+      .appName("TopTweetersApp")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    val tweetsFile = args(0)
+
+    // Assuming each line in the file is a JSON string of a tweet with a field "user" -> "screen_name"
+    val tweetsDF = spark.read.json(tweetsFile)
+
+    // Extract user screen_name and count tweets per user
+    val topTweeters = tweetsDF
+      .groupBy($"user.screen_name".alias("user"))
+      .count()
+      .orderBy(desc("count"))
+      .limit(10)
+
+    topTweeters.show(false)
+
+    spark.stop()
+  }
+}
+//5. A dataset with 8198 reduced tweets (reduced-tweets.json) will be provided. Write a Spark program to parse the tweets and perform operations using the provided sample format.
+import org.apache.spark.sql.{SparkSession, DataFrame}
+import org.apache.spark.sql.functions._
+
+object ReducedTweetsProcessor {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("ReducedTweetsProcessor")
+      .master("local[*]")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    val filePath = "data/reduced-tweets.json"  // Adjust path as needed
+
+    // Read the JSON tweets file
+    val tweetsDF = spark.read.json(filePath)
+
+    // Print schema to understand data structure
+    tweetsDF.printSchema()
+
+    // Show first 5 tweets
+    tweetsDF.show(5, truncate = false)
+
+    // Total number of tweets
+    val totalTweets = tweetsDF.count()
+    println(s"Total tweets: $totalTweets")
+
+    // Distinct users (assuming user.screen_name field)
+    val distinctUsers = tweetsDF.select($"user.screen_name").distinct().count()
+    println(s"Distinct users: $distinctUsers")
+
+    // Extract hashtags, assuming entities.hashtags is an array of structs with a 'text' field
+    val hashtagsDF = tweetsDF
+      .withColumn("hashtag", explode($"entities.hashtags"))
+      .select(lower($"hashtag.text").as("hashtag"))
+      .groupBy("hashtag")
+      .count()
+      .orderBy(desc("count"))
+
+    println("Top 10 hashtags:")
+    hashtagsDF.show(10, truncate = false)
+
+    // Tweets containing keyword "spark" (case insensitive)
+    val sparkTweetsCount = tweetsDF.filter(lower($"text").contains("spark")).count()
+    println(s"Tweets containing 'spark': $sparkTweetsCount")
+
+    spark.stop()
+  }
+}
+7. Develop the Spark code to find the average of marks using the combineByKey() operation.
+import org.apache.spark.sql.SparkSession
+
+object AverageMarksCombineByKey {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("AverageMarksCombineByKey")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    // Sample data: (student, marks)
+    val data = Seq(
+      ("Alice", 85),
+      ("Bob", 78),
+      ("Alice", 90),
+      ("Bob", 82),
+      ("Alice", 88),
+      ("Bob", 76)
+    )
+
+    val rdd = sc.parallelize(data)
+
+    val combined = rdd.combineByKey(
+      (marks: Int) => (marks, 1),               // createCombiner: initialize (sum, count)
+      (acc: (Int, Int), marks: Int) => (acc._1 + marks, acc._2 + 1), // mergeValue: add marks and increment count
+      (acc1: (Int, Int), acc2: (Int, Int)) => (acc1._1 + acc2._1, acc1._2 + acc2._2) // mergeCombiners: combine sums and counts
+    )
+
+    val averages = combined.mapValues { case (sum, count) => sum.toDouble / count }
+
+    averages.collect().foreach { case (student, avg) =>
+      println(s"$student: $avg")
+    }
+
+    spark.stop()
+  }
+}
+8. Consider the following input:
+Array(("Joe", "Maths", 83), ("Joe", "Physics", 74), ("Joe", "Chemistry", 91), ("Joe", "Biology", 82), ("Nik", "Maths", 69), ("Nik", "Physics", 62), ("Nik", "Chemistry", 97), ("Nik", "Biology", 80))
+Use Spark to compute the average marks for each student.
+import org.apache.spark.sql.SparkSession
+
+object AverageMarksPerStudent {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("AverageMarksPerStudent")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    val data = Array(
+      ("Joe", "Maths", 83),
+      ("Joe", "Physics", 74),
+      ("Joe", "Chemistry", 91),
+      ("Joe", "Biology", 82),
+      ("Nik", "Maths", 69),
+      ("Nik", "Physics", 62),
+      ("Nik", "Chemistry", 97),
+      ("Nik", "Biology", 80)
+    )
+
+    val rdd = sc.parallelize(data)
+
+    // Map to (student, marks)
+    val marksByStudent = rdd.map { case (student, _, marks) => (student, marks) }
+
+    val combined = marksByStudent.combineByKey(
+      (marks: Int) => (marks, 1),
+      (acc: (Int, Int), marks: Int) => (acc._1 + marks, acc._2 + 1),
+      (acc1: (Int, Int), acc2: (Int, Int)) => (acc1._1 + acc2._1, acc1._2 + acc2._2)
+    )
+
+    val averages = combined.mapValues { case (sum, count) => sum.toDouble / count }
+
+    averages.collect().foreach { case (student, avg) =>
+      println(s"$student: $avg")
+    }
+
+    spark.stop()
+  }
+}
+
+9. Consider an Employee table with fields (EmpID, Dept, EmpDesg). Design a Spark program to partition the table using Dept and construct a hash partition of 4.
+import org.apache.spark.sql.{SparkSession, DataFrame}
+import org.apache.spark.sql.functions._
+
+object EmployeePartitionApp {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("EmployeePartitionApp")
+      .master("local[*]")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    // Sample employee data
+    val employees = Seq(
+      (1, "HR", "Manager"),
+      (2, "IT", "Developer"),
+      (3, "Finance", "Analyst"),
+      (4, "HR", "Recruiter"),
+      (5, "IT", "Tester"),
+      (6, "Finance", "Manager")
+    ).toDF("EmpID", "Dept", "EmpDesg")
+
+    // Repartition the DataFrame by Dept column with 4 partitions using hash partitioning
+    val partitionedDF = employees.repartition(4, $"Dept")
+
+    // Show partitions info by collecting the partition index with rows
+    val rddWithPartitionId = partitionedDF.rdd.mapPartitionsWithIndex {
+      case (partitionId, iter) => iter.map(row => (partitionId, row))
+    }
+
+    rddWithPartitionId.collect().foreach {
+      case (pid, row) =>
+        println(s"Partition: $pid, EmpID: ${row.getAs[Int]("EmpID")}, Dept: ${row.getAs[String]("Dept")}, EmpDesg: ${row.getAs[String]("EmpDesg")}")
+    }
+
+    spark.stop()
+  }
+}
+10. Consider a collection of 100 integers stored in a CSV file. Write Spark code to find the average of these 100 items.
+import org.apache.spark.sql.SparkSession
+
+object AverageFromCSV {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("AverageFromCSV")
+      .master("local[*]")
+      .getOrCreate()
+
+    val df = spark.read
+      .option("header", "false")   // Assuming no header in CSV
+      .option("inferSchema", "true")
+      .csv("data/numbers.csv")     // Path to CSV file
+
+    // Assuming CSV has a single column of integers, column named "_c0"
+    val avg = df.agg(Map("_c0" -> "avg")).first().getDouble(0)
+
+    println(s"Average of numbers: $avg")
+
+    spark.stop()
+  }
+}
+11. Consider a collection with items as (11, 34, 45, 67, 3, 4, 90).
+a. Illustrate how Spark context constructs the RDD from the collection, assuming 3 partitions.
+b. Using mapPartitionsWithIndex, return the content of each partition along with the partition index. Apply a function that increments the value of each element by 1 and returns an array.
+import org.apache.spark.sql.SparkSession
+
+object PartitionExample {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("PartitionExample")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    val data = List(11, 34, 45, 67, 3, 4, 90)
+
+    // a. Create RDD with 3 partitions
+    val rdd = sc.parallelize(data, 3)
+
+    // b. Use mapPartitionsWithIndex to increment each element by 1 and return (partitionIndex, elements)
+    val result = rdd.mapPartitionsWithIndex { (index, iter) =>
+      val incremented = iter.map(_ + 1).toArray
+      Iterator((index, incremented))
+    }
+
+    result.collect().foreach { case (partitionIndex, arr) =>
+      println(s"Partition $partitionIndex: ${arr.mkString(", ")}")
+    }
+
+    spark.stop()
+  }
+}
+
+12. Given the object:
+Item = Map(("Ball" -> 10), ("Ribbon" -> 50), ("Box" -> 20), ("Pen" -> 5), ("Book" -> 8), ("Dairy" -> 4), ("Pin" -> 20))
+Design a Spark program to:
+a. Find how many partitions are created for the collection.
+b. Display the content of the RDD.
+c. Display the content of each partition separately.
+import org.apache.spark.sql.SparkSession
+
+object ItemPartitions {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("ItemPartitions")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    val items = Map(
+      "Ball" -> 10,
+      "Ribbon" -> 50,
+      "Box" -> 20,
+      "Pen" -> 5,
+      "Book" -> 8,
+      "Dairy" -> 4,
+      "Pin" -> 20
+    )
+
+    // Create RDD from Map
+    val rdd = sc.parallelize(items.toSeq)
+
+    // a. Number of partitions
+    val numPartitions = rdd.getNumPartitions
+    println(s"Number of partitions: $numPartitions")
+
+    // b. Display content of RDD
+    println("RDD contents:")
+    rdd.collect().foreach(println)
+
+    // c. Display content of each partition separately
+    val partitionContents = rdd.mapPartitionsWithIndex { (index, iter) =>
+      iter.map(item => s"Partition: $index, Item: $item")
+    }.collect()
+
+    partitionContents.foreach(println)
+
+    spark.stop()
+  }
+}
+
+13. Given distributed data of the Scala object (same Item map) as:
+Partition 1: ("Ball" -> 10), ("Ribbon" -> 50), ("Box" -> 20)
+
+Partition 2: ("Pen" -> 5), ("Book" -> 8)
+
+Partition 3: ("Dairy" -> 4), ("Pin" -> 20)
+
+Design a Spark program to:
+a. Find how many partitions are created.
+b. Display the content of the RDD.
+c. Display the content of each partition separately.
+import org.apache.spark.sql.SparkSession
+
+object ItemPartitionsCustom {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("ItemPartitionsCustom")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    // Define data with explicit partitioning by creating separate RDDs for each partition
+    val part1 = Seq(("Ball", 10), ("Ribbon", 50), ("Box", 20))
+    val part2 = Seq(("Pen", 5), ("Book", 8))
+    val part3 = Seq(("Dairy", 4), ("Pin", 20))
+
+    // Create an RDD with 3 partitions, where each partition contains the respective data
+    val rdd = sc.parallelize(Seq(part1, part2, part3), 3).flatMap(identity)
+
+    // a. Number of partitions
+    val numPartitions = rdd.getNumPartitions
+    println(s"Number of partitions: $numPartitions")
+
+    // b. Display content of RDD
+    println("RDD contents:")
+    rdd.collect().foreach(println)
+
+    // c. Display content of each partition separately
+    val partitionContents = rdd.mapPartitionsWithIndex { (index, iter) =>
+      iter.map(item => s"Partition: $index, Item: $item")
+    }.collect()
+
+    partitionContents.foreach(println)
+
+    spark.stop()
+  }
+}
+
+14. Consider the text file words.txt with the content:
+She sells sea shells by the seashore And the shells she sells by the seashore Are sea shells for sure
+
+Write Spark code to:
+a. Count the number of occurrences of each word.
+b. Arrange the word count in ascending order based on key.
+c. Display the words that begin with the letter ‘s’.
+import org.apache.spark.sql.SparkSession
+
+object WordCountApp {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("WordCountApp")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    // Read text file (adjust path if needed)
+    val textFile = sc.textFile("data/words.txt")
+
+    // a. Count occurrences of each word (case insensitive)
+    val wordCounts = textFile
+      .flatMap(_.toLowerCase.split("\\s+"))
+      .map(word => (word, 1))
+      .reduceByKey(_ + _)
+
+    // b. Arrange counts in ascending order by key (word)
+    val sortedWordCounts = wordCounts.sortByKey(ascending = true)
+
+    println("Word counts sorted by word:")
+    sortedWordCounts.collect().foreach { case (word, count) =>
+      println(s"$word: $count")
+    }
+
+    // c. Display words that begin with letter 's'
+    val wordsStartingWithS = sortedWordCounts.filter { case (word, _) =>
+      word.startsWith("s")
+    }
+
+    println("\nWords starting with 's':")
+    wordsStartingWithS.collect().foreach { case (word, count) =>
+      println(s"$word: $count")
+    }
+
+    spark.stop()
+  }
+}
+
+15. Illustrate the application of combineByKey to combine all the values of the same key in the following collection:
+(("coffee", 2), ("cappuccino", 5), ("tea", 3), ("coffee", 10), ("cappuccino", 15))
+import org.apache.spark.sql.SparkSession
+
+object CombineByKeyExample {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder()
+      .appName("CombineByKeyExample")
+      .master("local[*]")
+      .getOrCreate()
+
+    val sc = spark.sparkContext
+
+    val data = Seq(
+      ("coffee", 2),
+      ("cappuccino", 5),
+      ("tea", 3),
+      ("coffee", 10),
+      ("cappuccino", 15)
+    )
+
+    val rdd = sc.parallelize(data)
+
+    val combined = rdd.combineByKey(
+      (v: Int) => List(v),                        // createCombiner: start list with first value
+      (acc: List[Int], v: Int) => v :: acc,      // mergeValue: prepend new value to list
+      (acc1: List[Int], acc2: List[Int]) => acc1 ++ acc2 // mergeCombiners: concatenate lists
+    )
+
+    combined.collect().foreach { case (key, values) =>
+      println(s"$key -> ${values.reverse.mkString(", ")}")
+    }
+
+    spark.stop()
+  }
+}
+
+17. Write a Spark Streaming program in Scala that reads real-time text data from a socket stream (e.g., localhost:9999) and performs the following tasks:
+a. Extract words that begin with # (hashtags).
+b. Count the frequency of each hashtag over a sliding window of 30 seconds, updated every 5 seconds.
+c. Print the hashtag counts to the console in each 5-second interval.
+sudo su
+spark-shell
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.StreamingContext._
+import org.apache.spark.storage.StorageLevel
+
+val ssc = new StreamingContext(sc, Seconds(5))
+
+val lines = ssc.socketTextStream("localhost", 9999, StorageLevel.MEMORY_ONLY)
+
+val hashtags = lines.flatMap(_.split(" "))
+  .filter(word => word.startsWith("#"))
+  .map(hashtag => (hashtag.toLowerCase, 1))
+
+val hashtagCounts = hashtags.reduceByKeyAndWindow(
+  (a: Int, b: Int) => a + b,
+  (a: Int, b: Int) => a - b,
+  Seconds(30),
+  Seconds(5)
+)
+
+hashtagCounts.print()
+
+ssc.start()
+ssc.awaitTermination()
+new terminal:-
+sudo su 
+nc -lk 9999
+
+
+
+
+FROM 2ND SPARK CLASS SESSION:-
+
+
+4. Write a Scala program to illustrate the use of pattern matching with case classes.  
+   Define:  
+   abstract class Notification  
+   case class Email(sender: String, title: String, body: String) extends Notification  
+   case class SMS(caller: String, message: String) extends Notification  
+   Define a function `showNotification` that takes a parameter of type Notification and matches on its type:  
+   - For Email(sender, title, _): return `s"You got an email from $sender with title: $title"`  
+   - For SMS(caller, message): return `s"You got an SMS from $caller! Message: $message"`
+
+5. Write the Scala program using imperative style to implement the quick sort algorithm.
+object ImperativeQuickSort {
+  def quickSort(arr: Array[Int], low: Int, high: Int): Unit = {
+    if (low < high) {
+      val pi = partition(arr, low, high)
+      quickSort(arr, low, pi - 1)
+      quickSort(arr, pi + 1, high)
+    }
+  }
+
+  def partition(arr: Array[Int], low: Int, high: Int): Int = {
+    val pivot = arr(high)
+    var i = low - 1
+
+    for (j <- low until high) {
+      if (arr(j) <= pivot) {
+        i += 1
+        val temp = arr(i)
+        arr(i) = arr(j)
+        arr(j) = temp
+      }
+    }
+
+    val temp = arr(i + 1)
+    arr(i + 1) = arr(high)
+    arr(high) = temp
+
+    i + 1
+  }
+
+  def main(args: Array[String]): Unit = {
+    val arr = Array(34, 7, 23, 32, 5, 62)
+    println("Original array:")
+    println(arr.mkString(", "))
+
+    quickSort(arr, 0, arr.length - 1)
+
+    println("Sorted array:")
+    println(arr.mkString(", "))
+  }
+}
+
+6. Write a Scala function to capitalize each word in a given sentence.
+object CapitalizeWordsApp {
+  def capitalizeWords(sentence: String): String = {
+    sentence
+      .split("\\s+")
+      .map(word =>
+        if (word.nonEmpty)
+          word.head.toUpper + word.tail.toLowerCase
+        else
+          word
+      )
+      .mkString(" ")
+  }
+
+  def main(args: Array[String]): Unit = {
+    val input = "hello world from scala"
+    val output = capitalizeWords(input)
+    println(output)
+  }
+}
+
+7. Write Scala code in functional style to implement the quick sort algorithm.
+object QuickSortApp {
+  def quickSort[A](list: List[A])(implicit ord: Ordering[A]): List[A] = list match {
+    case Nil => Nil
+    case pivot :: tail =>
+      val (less, greater) = tail.partition(ord.lt(_, pivot))
+      quickSort(less) ::: pivot :: quickSort(greater)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val unsorted = List(5, 3, 8, 1, 2, 7, 4, 6)
+    val sorted = quickSort(unsorted)
+    println(sorted)
+  }
+}
+8. For the collection:  
+   Items = {("Pen", 20), ("Pencil", 10), ("Erasor", 7), ("Book", 25), ("Sheet", 15)}  
+   Write Scala code to:  
+   a. Display item name and quantity  
+   b. Display sum of quantities and total number of items  
+   c. Add 3 Books to the collection  
+   d. Add new item "Board" with quantity 15
+object ItemsCollectionApp {
+  def main(args: Array[String]): Unit = {
+    // Initial collection
+    var items = Map(
+      "Pen" -> 20,
+      "Pencil" -> 10,
+      "Erasor" -> 7,
+      "Book" -> 25,
+      "Sheet" -> 15
+    )
+
+    // a. Display item name and quantity
+    println("Item name and quantity:")
+    items.foreach { case (item, qty) =>
+      println(s"$item: $qty")
+    }
+
+    // b. Display sum of quantities and total number of items
+    val totalQty = items.values.sum
+    val totalItems = items.size
+    println(s"\nTotal quantity: $totalQty")
+    println(s"Total number of items: $totalItems")
+
+    // c. Add 3 Books to the collection
+    items = items.updated("Book", items.getOrElse("Book", 0) + 3)
+
+    // d. Add new item "Board" with quantity 15
+    items = items + ("Board" -> 15)
+
+    println("\nUpdated collection:")
+    items.foreach { case (item, qty) =>
+      println(s"$item: $qty")
+    }
+  }
+}
+
+9. Develop Scala code to search an element in a given list of numbers.  
+   Define a function `Search()` that takes two arguments: a list of numbers and the number to search. Return true if found, else false.
+object SearchApp {
+  def Search(numbers: List[Int], target: Int): Boolean = {
+    numbers.contains(target)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val nums = List(10, 20, 30, 40, 50)
+    println(Search(nums, 30))  // true
+    println(Search(nums, 25))  // false
+  }
+}
+
+10. Write Scala code to generate a down counter from 10 to 1.
+object DownCounter {
+  def main(args: Array[String]): Unit = {
+    for (i <- 10 to 1 by -1) {
+      println(i)
+    }
+  }
+}
+11. Design a Scala function to compute factorial for each item in a given collection. Assume appropriate data types for the function arguments and return type as Int.
+object FactorialCalculator {
+  def factorial(n: Int): Int = {
+    if (n <= 1) 1 else n * factorial(n - 1)
+  }
+
+  def computeFactorials(nums: Seq[Int]): Seq[Int] = {
+    nums.map(factorial)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val numbers = Seq(3, 4, 5, 6)
+    val facts = computeFactorials(numbers)
+    println(facts.mkString(", "))  // Output: 6, 24, 120, 720
+  }
+}
+
+12. For the collection:  
+    Items = {("Butter", 20), ("Bun", 10), ("Egg", 7), ("Biscuit", 25), ("Bread", 15)}  
+    Write Scala code to:  
+    a. Display item name and quantity  
+    b. Display sum of quantities and total number of items  
+    c. Add 3 Buns to the collection  
+    d. Add new item "Cheese" with quantity 12
+object ItemsApp {
+  def main(args: Array[String]): Unit = {
+    var items = Map(
+      "Butter" -> 20,
+      "Bun" -> 10,
+      "Egg" -> 7,
+      "Biscuit" -> 25,
+      "Bread" -> 15
+    )
+
+    // a. Display item name and quantity
+    println("Item name and quantity:")
+    items.foreach { case (item, qty) =>
+      println(s"$item: $qty")
+    }
+
+    // b. Display sum of quantities and total number of items
+    val totalQty = items.values.sum
+    val totalItems = items.size
+    println(s"\nTotal quantity: $totalQty")
+    println(s"Total number of items: $totalItems")
+
+    // c. Add 3 Buns to the collection
+    items = items.updated("Bun", items.getOrElse("Bun", 0) + 3)
+
+    // d. Add new item "Cheese" with quantity 12
+    items = items + ("Cheese" -> 12)
+
+    println("\nUpdated collection:")
+    items.foreach { case (item, qty) =>
+      println(s"$item: $qty")
+    }
+  }
+}
+
+
+13. Implement a recursive binary search function in Scala. The function should take two arguments: a sorted list of numbers and the number to search.
+object RecursiveBinarySearch {
+  def binarySearch(sortedList: List[Int], target: Int, low: Int = 0, high: Int = -1): Int = {
+    val hi = if (high == -1) sortedList.length - 1 else high
+    if (low > hi) -1
+    else {
+      val mid = low + (hi - low) / 2
+      if (sortedList(mid) == target) mid
+      else if (sortedList(mid) > target) binarySearch(sortedList, target, low, mid - 1)
+      else binarySearch(sortedList, target, mid + 1, hi)
+    }
+  }
+
+  def main(args: Array[String]): Unit = {
+    val list = List(2, 5, 8, 12, 16, 23, 38, 56, 72, 91)
+    val target = 23
+    val result = binarySearch(list, target)
+    if (result == -1) println(s"$target not found")
+    else println(s"$target found at index $result")
+  }
+}
+
+14. Write a Scala function to find the length of each word and return the word with the highest length.  
+    Example: For the collection ("games", "television", "rope", "table"), return ("television", 10).  
+    Read the words from the keyboard.
+object LongestWordFinder {
+  def longestWordWithLength(words: Seq[String]): (String, Int) = {
+    words.map(w => (w, w.length)).maxBy(_._2)
+  }
+
+  def main(args: Array[String]): Unit = {
+    println("Enter words separated by space:")
+    val input = scala.io.StdIn.readLine()
+    val words = input.split("\\s+").toSeq
+
+    val (word, length) = longestWordWithLength(words)
+    println(s"Longest word: $word, Length: $length")
+  }
+}
+
+15. Define a function `f1` that prints "I am function". Then define another function `f2` that takes a function as a parameter and calls it. Pass `f1` to `f2` and execute it.
+object FunctionExample {
+  def f1(): Unit = {
+    println("I am function")
+  }
+
+  def f2(func: () => Unit): Unit = {
+    func()
+  }
+
+  def main(args: Array[String]): Unit = {
+    f2(f1)
+  }
+}
+
+16. Write a Scala program to demonstrate the use of the following higher-order functions on a list of integers:  
+    - reduce  
+    - reduceLeft  
+    - reduceRight
+object HigherOrderFunctionsDemo {
+  def main(args: Array[String]): Unit = {
+    val nums = List(1, 2, 3, 4, 5)
+
+    val reduceResult = nums.reduce(_ + _)
+    val reduceLeftResult = nums.reduceLeft(_ - _)
+    val reduceRightResult = nums.reduceRight(_ - _)
+
+    println(s"reduce (sum): $reduceResult")         // 15
+    println(s"reduceLeft (subtraction): $reduceLeftResult")   // (((1 - 2) - 3) - 4) - 5 = -13
+    println(s"reduceRight (subtraction): $reduceRightResult") // 1 - (2 - (3 - (4 - 5))) = 3
+  }
+}
